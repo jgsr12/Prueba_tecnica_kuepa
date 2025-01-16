@@ -1,47 +1,65 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Importar Link para navegación
+// src/components/Login.jsx
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { TextField, Button, Card, CardContent, Typography, Alert } from '@mui/material';
+import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { setAuthToken } from '../../utils/auth';
 
 const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const { register, handleSubmit, formState: { errors }, setError } = useForm();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     try {
-      const response = await api.post('/auth/login', { username, password });
+      const response = await api.post('/auth/login', data);
       setAuthToken(response.data.token);
-      onLogin(); // Llamar al padre para redirigir
+      onLogin();
     } catch (err) {
-      alert('Error al iniciar sesión: ' + err.response.data.message);
+      setError('apiError', { message: err.response?.data?.message || 'Error al iniciar sesión' });
     }
   };
 
   return (
-    <form onSubmit={handleLogin} className="container mt-5">
-      <h2>Iniciar Sesión</h2>
-      <input
-        type="text"
-        className="form-control my-2"
-        placeholder="Usuario"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-      />
-      <input
-        type="password"
-        className="form-control my-2"
-        placeholder="Contraseña"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button type="submit" className="btn btn-primary">Ingresar</button>
-      
-      <div className="mt-3">
-        <p>¿No tienes una cuenta?</p>
-        <Link to="/register" className="btn btn-secondary">Registrarse</Link>
-      </div>
-    </form>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#f5f5f5' }}>
+      <Card sx={{ width: 400, padding: 2, boxShadow: 3 }}>
+        <CardContent>
+          <Typography variant="h4" align="center" gutterBottom>
+            Iniciar Sesión
+          </Typography>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <TextField
+              label="Usuario"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              {...register('username', { required: 'El usuario es obligatorio' })}
+              error={!!errors.username}
+              helperText={errors.username?.message}
+            />
+            <TextField
+              label="Contraseña"
+              type="password"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              {...register('password', { required: 'La contraseña es obligatoria' })}
+              error={!!errors.password}
+              helperText={errors.password?.message}
+            />
+            {errors.apiError && <Alert severity="error" sx={{ mt: 2 }}>{errors.apiError.message}</Alert>}
+            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+              Ingresar
+            </Button>
+          </form>
+          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+            ¿No tienes una cuenta?{' '}
+            <Link to="/register" style={{ textDecoration: 'none', color: '#1976d2' }}>
+              Registrarse
+            </Link>
+          </Typography>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

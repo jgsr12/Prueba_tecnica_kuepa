@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import api from '../utils/api';
+import { setAuthToken } from '../utils/auth';
+import { AppBar, Toolbar, Typography, Button, TextField, Box, Paper, List, ListItem, ListItemText } from '@mui/material';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -53,38 +55,74 @@ const Chat = () => {
   };
 
   const handleLogout = () => {
-    // Cerrar sesión
     localStorage.removeItem('token');
-    socket.disconnect();
+  
+    setAuthToken(null);
+  
+    if (socket.connected) {
+      socket.disconnect();
+    }
+  
     navigate('/login');
   };
 
   return (
-    <div className="container mt-5">
-      <div className="d-flex justify-content-between align-items-center">
-        <h2>Chat</h2>
-        <button onClick={handleLogout} className="btn btn-danger">Logout</button>
-      </div>
+    <Box>
+      <AppBar position="static" color="primary">
+        <Toolbar>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Chat
+          </Typography>
+          <Button color="inherit" onClick={handleLogout}>
+            Cerrar Sesión
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-      <div className="chat-box" style={{ border: '1px solid #ccc', height: '400px', overflowY: 'auto', padding: '10px' }}>
-        {messages.map((msg, index) => (
-          <div key={index} style={{ marginBottom: '10px' }}>
-            <strong>{msg.User?.name || 'Desconocido'}:</strong> {msg.content}
-          </div>
-        ))}
-      </div>
+      {/* Chat Box */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          height: 'calc(100vh - 64px)',
+          padding: 2,
+          backgroundColor: '#f5f5f5',
+        }}
+      >
+        {/* Message List */}
+        <Paper elevation={3} sx={{ flexGrow: 1, overflowY: 'auto', padding: 2, marginBottom: 2 }}>
+          <List>
+            {messages.map((msg, index) => (
+              <ListItem key={index} sx={{ marginBottom: 1 }}>
+                <ListItemText
+                  primary={
+                    <Typography variant="subtitle1" color="primary">
+                      {msg.User?.name || 'Desconocido'}
+                    </Typography>
+                  }
+                  secondary={msg.content}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Paper>
 
-      <div className="mt-3">
-        <input
-          type="text"
-          className="form-control my-2"
-          placeholder="Escribe un mensaje..."
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-        />
-        <button onClick={sendMessage} className="btn btn-primary">Enviar</button>
-      </div>
-    </div>
+        {/* Message Input */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            variant="outlined"
+            fullWidth
+            placeholder="Escribe un mensaje..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+          />
+          <Button variant="contained" color="primary" onClick={sendMessage}>
+            Enviar
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
